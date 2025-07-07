@@ -9,9 +9,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Configuration
-REPO_URL="https://github.com/dangwn/k8s-sandbox.git"
-BRANCH="main"
+# Configuration (will be loaded from ConfigMap)
+REPO_URL=""
+BRANCH=""
 
 echo -e "${GREEN}Deploying Flux CD to Kubernetes cluster${NC}"
 echo "========================================"
@@ -32,8 +32,7 @@ fi
 
 echo -e "${GREEN}✓ Kubernetes cluster accessible${NC}"
 echo ""
-echo -e "${BLUE}Repository URL: ${REPO_URL}${NC}"
-echo -e "${BLUE}Branch: ${BRANCH}${NC}"
+echo -e "${BLUE}Configuration will be loaded from ConfigMap${NC}"
 echo ""
 
 # Confirm deployment
@@ -49,6 +48,18 @@ echo -e "${YELLOW}Creating flux-system namespace...${NC}"
 kubectl apply -f flux-system/namespace.yaml
 
 echo -e "${GREEN}✓ Namespace created${NC}"
+
+# Create repository configuration ConfigMap
+echo -e "${YELLOW}Creating repository configuration...${NC}"
+kubectl apply -f clusters/local/repository-config.yaml
+
+echo -e "${GREEN}✓ Repository configuration created${NC}"
+
+# Generate Flux resources from ConfigMap
+echo -e "${YELLOW}Generating Flux resources from configuration...${NC}"
+./generate-flux-config.sh
+
+echo -e "${GREEN}✓ Flux resources generated${NC}"
 
 # Apply Flux components
 echo -e "${YELLOW}Installing Flux components...${NC}"
@@ -68,6 +79,10 @@ kubectl apply -f clusters/local/flux-system-kustomization.yaml
 kubectl apply -f clusters/local/apps-kustomization.yaml
 
 echo -e "${GREEN}✓ Git repository and kustomizations configured${NC}"
+
+# Load configuration for display
+REPO_URL=$(kubectl get configmap repository-config -n flux-system -o jsonpath='{.data.repository_url}' 2>/dev/null || echo "ConfigMap not found")
+BRANCH=$(kubectl get configmap repository-config -n flux-system -o jsonpath='{.data.repository_branch}' 2>/dev/null || echo "main")
 
 # Final status check
 echo ""
@@ -92,4 +107,10 @@ echo -e "${YELLOW}🔄 Force sync (if needed):${NC}"
 echo "  kubectl -n flux-system annotate gitrepository/flux-system reconcile.fluxcd.io/requestedAt=\"\$(date +%s)\" --overwrite"
 echo ""
 echo -e "${GREEN}🚀 Flux will now automatically sync from: $REPO_URL (branch: $BRANCH)${NC}"
+echo ""
+echo -e "${YELLOW}📝 To modify repository configuration:${NC}"
+echo "  1. Edit clusters/local/repository-config.yaml"
+echo "  2. Apply: kubectl apply -f clusters/local/repository-config.yaml"
+echo "  3. Regenerate: ./generate-flux-config.sh"
+echo "  4. Apply updated resources"
 echo -e "${BLUE}Add your applications to the 'apps/' directory and they'll be deployed automatically!${NC}"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set +e
 
 # Colors for output
 RED='\033[0;31m'
@@ -33,8 +33,8 @@ echo "• All Flux controllers (source, kustomize, helm)"
 echo "• All Flux Custom Resource Definitions"
 echo "• GitRepository: flux-system"
 echo "• Kustomizations: flux-system, apps"
-echo "• ConfigMap: bitbucket-config"
-echo "• Secrets: flux-system, bitbucket-ssh-credentials"
+echo "• ConfigMap: repository-config"
+echo "• Secrets: flux-system"
 echo "• Namespace: flux-system (and all contents)"
 echo ""
 echo -e "${YELLOW}Resources deployed by Flux (your applications) will NOT be removed.${NC}"
@@ -82,13 +82,12 @@ echo "Deleting cluster role bindings..."
 kubectl delete clusterrolebinding flux --ignore-not-found=true
 
 # Delete our created ConfigMap and Secrets
-echo -e "${YELLOW}Step 4: Removing credentials...${NC}"
-echo "Deleting Bitbucket ConfigMap..."
-kubectl delete configmap -n flux-system bitbucket-config --ignore-not-found=true
+echo -e "${YELLOW}Step 4: Removing configuration...${NC}"
+echo "Deleting repository ConfigMap..."
+kubectl delete configmap -n flux-system repository-config --ignore-not-found=true
 
-echo "Deleting SSH credentials secrets..."
+echo "Deleting Flux secrets..."
 kubectl delete secret -n flux-system flux-system --ignore-not-found=true
-kubectl delete secret -n flux-system bitbucket-ssh-credentials --ignore-not-found=true
 
 # Delete Custom Resource Definitions
 echo -e "${YELLOW}Step 5: Removing Custom Resource Definitions...${NC}"
@@ -135,12 +134,12 @@ echo -e "${YELLOW}Summary of what was removed:${NC}"
 echo "✓ Flux controllers (source, kustomize, helm)"
 echo "✓ Flux Custom Resource Definitions"
 echo "✓ GitRepository and Kustomization resources"
-echo "✓ Bitbucket ConfigMap and SSH credentials"
+echo "✓ Repository ConfigMap and Flux secrets"
 echo "✓ flux-system namespace"
 echo ""
 echo -e "${YELLOW}📋 What was NOT removed:${NC}"
 echo "• Applications deployed by Flux (in other namespaces)"
-echo "• SSH keys in .keys directory"
+echo "• Repository configuration templates"
 echo "• Cluster resources not managed by Flux"
 echo "• Your Git repository and its contents"
 echo ""

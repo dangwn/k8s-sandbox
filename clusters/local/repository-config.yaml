@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: repository-config
+  namespace: flux-system
+data:
+  # Repository Configuration
+  repository_url: "https://github.com/dangwn/k8s-sandbox.git"
+  repository_branch: "main"
+  repository_path: "."
+  
+  # Sync Configuration
+  sync_interval: "1m0s"
+  kustomization_interval: "10m"
+  apps_interval: "1m"
+  
+  # Paths
+  flux_path: "./clusters/local"
+  apps_path: "./apps"
+  
+  # Git Implementation
+  git_implementation: "go-git"
+  
+  # Verification
+  verify_mode: "none"
+  
+  # Prune Configuration
+  prune_enabled: "true"
