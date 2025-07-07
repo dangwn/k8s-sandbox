@@ -1,23 +1,611 @@
-# Minimal Flux Components for lightweight deployment
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: flux-system
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: gitrepositories.source.toolkit.fluxcd.io
+spec:
+  group: source.toolkit.fluxcd.io
+  names:
+    kind: GitRepository
+    listKind: GitRepositoryList
+    plural: gitrepositories
+    singular: gitrepository
+  scope: Namespaced
+  versions:
+  - name: v1beta2
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - interval
+            - url
+            properties:
+              interval:
+                type: string
+                pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+              url:
+                type: string
+              ref:
+                type: object
+                properties:
+                  branch:
+                    type: string
+                  tag:
+                    type: string
+                  commit:
+                    type: string
+              secretRef:
+                type: object
+                properties:
+                  name:
+                    type: string
+                required:
+                - name
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - type
+                  - status
+                  properties:
+                    type:
+                      type: string
+                    status:
+                      type: string
+                    reason:
+                      type: string
+                    message:
+                      type: string
+                    lastTransitionTime:
+                      type: string
+                      format: date-time
+              observedGeneration:
+                type: integer
+                format: int64
+              artifact:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  url:
+                    type: string
+                  revision:
+                    type: string
+                  lastUpdateTime:
+                    type: string
+                    format: date-time
+    additionalPrinterColumns:
+    - name: URL
+      type: string
+      jsonPath: .spec.url
+    - name: Ready
+      type: string
+      jsonPath: .status.conditions[?(@.type=="Ready")].status
+    - name: Status
+      type: string
+      jsonPath: .status.conditions[?(@.type=="Ready")].message
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: helmcharts.source.toolkit.fluxcd.io
+spec:
+  group: source.toolkit.fluxcd.io
+  names:
+    kind: HelmChart
+    listKind: HelmChartList
+    plural: helmcharts
+    singular: helmchart
+  scope: Namespaced
+  versions:
+  - name: v1beta2
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - chart
+            - interval
+            - sourceRef
+            properties:
+              chart:
+                type: string
+              interval:
+                type: string
+                pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+              sourceRef:
+                type: object
+                required:
+                - kind
+                - name
+                properties:
+                  kind:
+                    type: string
+                  name:
+                    type: string
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - type
+                  - status
+                  properties:
+                    type:
+                      type: string
+                    status:
+                      type: string
+                    reason:
+                      type: string
+                    message:
+                      type: string
+                    lastTransitionTime:
+                      type: string
+                      format: date-time
+              observedGeneration:
+                type: integer
+                format: int64
+              artifact:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  url:
+                    type: string
+                  revision:
+                    type: string
+                  lastUpdateTime:
+                    type: string
+                    format: date-time
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: buckets.source.toolkit.fluxcd.io
+spec:
+  group: source.toolkit.fluxcd.io
+  names:
+    kind: Bucket
+    listKind: BucketList
+    plural: buckets
+    singular: bucket
+  scope: Namespaced
+  versions:
+  - name: v1beta2
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - endpoint
+            - interval
+            properties:
+              endpoint:
+                type: string
+              interval:
+                type: string
+                pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    status:
+                      type: string
+              observedGeneration:
+                type: integer
+                format: int64
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: ocirepositories.source.toolkit.fluxcd.io
+spec:
+  group: source.toolkit.fluxcd.io
+  names:
+    kind: OCIRepository
+    listKind: OCIRepositoryList
+    plural: ocirepositories
+    singular: ocirepository
+  scope: Namespaced
+  versions:
+  - name: v1beta2
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - interval
+            - url
+            properties:
+              interval:
+                type: string
+                pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+              url:
+                type: string
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    status:
+                      type: string
+              observedGeneration:
+                type: integer
+                format: int64
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: helmrepositories.source.toolkit.fluxcd.io
+spec:
+  group: source.toolkit.fluxcd.io
+  names:
+    kind: HelmRepository
+    listKind: HelmRepositoryList
+    plural: helmrepositories
+    singular: helmrepository
+  scope: Namespaced
+  versions:
+  - name: v1beta2
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - interval
+            - url
+            properties:
+              interval:
+                type: string
+                pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+              url:
+                type: string
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    status:
+                      type: string
+              observedGeneration:
+                type: integer
+                format: int64
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: kustomizations.kustomize.toolkit.fluxcd.io
+spec:
+  group: kustomize.toolkit.fluxcd.io
+  names:
+    kind: Kustomization
+    listKind: KustomizationList
+    plural: kustomizations
+    singular: kustomization
+  scope: Namespaced
+  versions:
+  - name: v1beta2
+    served: true
+    storage: true
+    schema:
+      openAPIV3Schema:
+        type: object
+        properties:
+          spec:
+            type: object
+            required:
+            - interval
+            - prune
+            - sourceRef
+            properties:
+              interval:
+                type: string
+                pattern: ^([0-9]+(\.[0-9]+)?(ms|s|m|h))+$
+              prune:
+                type: boolean
+              path:
+                type: string
+              sourceRef:
+                type: object
+                required:
+                - kind
+                - name
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                    - GitRepository
+                  name:
+                    type: string
+                  namespace:
+                    type: string
+              dependsOn:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - name
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+          status:
+            type: object
+            properties:
+              conditions:
+                type: array
+                items:
+                  type: object
+                  required:
+                  - type
+                  - status
+                  properties:
+                    type:
+                      type: string
+                    status:
+                      type: string
+                    reason:
+                      type: string
+                    message:
+                      type: string
+                    lastTransitionTime:
+                      type: string
+                      format: date-time
+              observedGeneration:
+                type: integer
+                format: int64
+              lastAppliedRevision:
+                type: string
+    additionalPrinterColumns:
+    - name: Ready
+      type: string
+      jsonPath: .status.conditions[?(@.type=="Ready")].status
+    - name: Status
+      type: string
+      jsonPath: .status.conditions[?(@.type=="Ready")].message
+    - name: Age
+      type: date
+      jsonPath: .metadata.creationTimestamp
 ---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: flux
+  name: source-controller
+  namespace: flux-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kustomize-controller
+  namespace: flux-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: source-controller
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - source.toolkit.fluxcd.io
+  resources:
+  - gitrepositories
+  - helmcharts
+  - helmrepositories
+  - buckets
+  - ocirepositories
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - source.toolkit.fluxcd.io
+  resources:
+  - gitrepositories/status
+  - helmcharts/status
+  - helmrepositories/status
+  - buckets/status
+  - ocirepositories/status
+  verbs:
+  - get
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kustomize-controller
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  - serviceaccounts
+  - services
+  - namespaces
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  - daemonsets
+  - replicasets
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - kustomize.toolkit.fluxcd.io
+  resources:
+  - kustomizations
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - kustomize.toolkit.fluxcd.io
+  resources:
+  - kustomizations/status
+  verbs:
+  - get
+  - update
+  - patch
+- apiGroups:
+  - source.toolkit.fluxcd.io
+  resources:
+  - gitrepositories
+  - buckets
+  - ocirepositories
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - source.toolkit.fluxcd.io
+  resources:
+  - gitrepositories/status
+  - buckets/status
+  - ocirepositories/status
+  verbs:
+  - get
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - networkpolicies
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: source-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: source-controller
+subjects:
+- kind: ServiceAccount
+  name: source-controller
   namespace: flux-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: flux
+  name: kustomize-controller
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: kustomize-controller
 subjects:
 - kind: ServiceAccount
-  name: flux
+  name: kustomize-controller
   namespace: flux-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: source-controller
+  namespace: flux-system
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 9090
+  selector:
+    app: source-controller
+  type: ClusterIP
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -34,43 +622,67 @@ spec:
       labels:
         app: source-controller
     spec:
-      serviceAccountName: flux
+      serviceAccountName: source-controller
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
       containers:
       - name: manager
-        image: ghcr.io/fluxcd/source-controller:v1.2.4
+        image: ghcr.io/fluxcd/source-controller:v0.36.1
         args:
+        - --events-addr=
         - --watch-all-namespaces=true
         - --log-level=info
         - --storage-path=/data
+        - --storage-adv-addr=source-controller.flux-system.svc.cluster.local.
+        env:
+        - name: RUNTIME_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         ports:
         - containerPort: 9090
           name: http
+          protocol: TCP
+        - containerPort: 8080
+          name: http-prom
+          protocol: TCP
+        - containerPort: 9440
+          name: healthz
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: healthz
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
         resources:
-          requests:
-            memory: "32Mi"
-            cpu: "10m"
           limits:
-            memory: "128Mi"
-            cpu: "100m"
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 50m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
         volumeMounts:
-        - name: data
-          mountPath: /data
+        - mountPath: /data
+          name: data
+        - mountPath: /tmp
+          name: tmp
       volumes:
-      - name: data
-        emptyDir: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: source-controller
-  namespace: flux-system
-spec:
-  selector:
-    app: source-controller
-  ports:
-  - name: http
-    port: 80
-    targetPort: 9090
+      - emptyDir: {}
+        name: data
+      - emptyDir: {}
+        name: tmp
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -87,143 +699,55 @@ spec:
       labels:
         app: kustomize-controller
     spec:
-      serviceAccountName: flux
+      serviceAccountName: kustomize-controller
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        fsGroup: 65534
       containers:
       - name: manager
-        image: ghcr.io/fluxcd/kustomize-controller:v1.2.2
+        image: ghcr.io/fluxcd/kustomize-controller:v0.35.1
         args:
+        - --events-addr=
         - --watch-all-namespaces=true
         - --log-level=info
+        env:
+        - name: RUNTIME_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - containerPort: 8080
+          name: http-prom
+          protocol: TCP
+        - containerPort: 9440
+          name: healthz
+          protocol: TCP
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: healthz
+        readinessProbe:
+          httpGet:
+            path: /readyz
+            port: healthz
         resources:
-          requests:
-            memory: "32Mi"
-            cpu: "10m"
           limits:
-            memory: "128Mi"
-            cpu: "100m"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: helm-controller
-  namespace: flux-system
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: helm-controller
-  template:
-    metadata:
-      labels:
-        app: helm-controller
-    spec:
-      serviceAccountName: flux
-      containers:
-      - name: manager
-        image: ghcr.io/fluxcd/helm-controller:v0.37.4
-        args:
-        - --watch-all-namespaces=true
-        - --log-level=info
-        resources:
+            cpu: 1000m
+            memory: 1Gi
           requests:
-            memory: "32Mi"
-            cpu: "10m"
-          limits:
-            memory: "128Mi"
-            cpu: "100m"
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: gitrepositories.source.toolkit.fluxcd.io
-spec:
-  group: source.toolkit.fluxcd.io
-  versions:
-  - name: v1
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-          status:
-            type: object
-  scope: Namespaced
-  names:
-    plural: gitrepositories
-    singular: gitrepository
-    kind: GitRepository
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: kustomizations.kustomize.toolkit.fluxcd.io
-spec:
-  group: kustomize.toolkit.fluxcd.io
-  versions:
-  - name: v1
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-          status:
-            type: object
-  scope: Namespaced
-  names:
-    plural: kustomizations
-    singular: kustomization
-    kind: Kustomization
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: helmreleases.helm.toolkit.fluxcd.io
-spec:
-  group: helm.toolkit.fluxcd.io
-  versions:
-  - name: v2beta2
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-          status:
-            type: object
-  scope: Namespaced
-  names:
-    plural: helmreleases
-    singular: helmrelease
-    kind: HelmRelease
----
-apiVersion: apiextensions.k8s.io/v1
-kind: CustomResourceDefinition
-metadata:
-  name: helmrepositories.source.toolkit.fluxcd.io
-spec:
-  group: source.toolkit.fluxcd.io
-  versions:
-  - name: v1beta2
-    served: true
-    storage: true
-    schema:
-      openAPIV3Schema:
-        type: object
-        properties:
-          spec:
-            type: object
-          status:
-            type: object
-  scope: Namespaced
-  names:
-    plural: helmrepositories
-    singular: helmrepository
-    kind: HelmRepository
+            cpu: 100m
+            memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+      volumes:
+      - emptyDir: {}
+        name: tmp

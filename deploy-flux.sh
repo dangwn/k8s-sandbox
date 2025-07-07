@@ -11,7 +11,7 @@ NC='\033[0m' # No Color
 
 # Configuration
 REPO_URL="https://github.com/dangwn/k8s-sandbox.git"
-BRANCH="master"
+BRANCH="main"
 
 echo -e "${GREEN}Deploying Flux CD to Kubernetes cluster${NC}"
 echo "========================================"
@@ -57,8 +57,7 @@ kubectl apply -f flux-system/flux-components.yaml
 # Wait for deployments
 echo -e "${YELLOW}Waiting for Flux controllers to be ready...${NC}"
 kubectl -n flux-system wait --for=condition=available --timeout=300s deployment/source-controller
-kubectl -n flux-system wait --for=condition=available --timeout=300s deployment/kustomize-controller  
-kubectl -n flux-system wait --for=condition=available --timeout=300s deployment/helm-controller
+kubectl -n flux-system wait --for=condition=available --timeout=300s deployment/kustomize-controller
 
 echo -e "${GREEN}✓ All Flux controllers are ready${NC}"
 
@@ -76,7 +75,7 @@ echo -e "${GREEN}🎉 Flux CD deployment complete!${NC}"
 echo ""
 echo -e "${YELLOW}📋 Resources created:${NC}"
 echo "• Namespace: flux-system"
-echo "• Deployments: source-controller, kustomize-controller, helm-controller"
+echo "• Deployments: source-controller, kustomize-controller"
 echo "• GitRepository: flux-system"
 echo "• Kustomizations: flux-system, apps"
 echo ""
@@ -88,7 +87,6 @@ echo ""
 echo -e "${YELLOW}📊 View logs:${NC}"
 echo "  kubectl -n flux-system logs deployment/source-controller"
 echo "  kubectl -n flux-system logs deployment/kustomize-controller"
-echo "  kubectl -n flux-system logs deployment/helm-controller"
 echo ""
 echo -e "${YELLOW}🔄 Force sync (if needed):${NC}"
 echo "  kubectl -n flux-system annotate gitrepository/flux-system reconcile.fluxcd.io/requestedAt=\"\$(date +%s)\" --overwrite"

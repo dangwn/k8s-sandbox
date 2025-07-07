@@ -1,4 +1,4 @@
-apiVersion: source.toolkit.fluxcd.io/v1
+apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: GitRepository
 metadata:
   name: flux-system
@@ -6,8 +6,5 @@ metadata:
 spec:
   interval: 1m0s
   ref:
-    branch: master
+    branch: main
   url: https://github.com/dangwn/k8s-sandbox.git
-  gitImplementation: go-git
-  verify:
-    mode: none
