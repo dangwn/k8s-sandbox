@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - deployment.yaml
+
+namespace: default
+
+commonLabels:
+  app.kubernetes.io/name: healthy-app-demo
+  app.kubernetes.io/managed-by: flux
+
+# Health check annotations for better monitoring
+commonAnnotations:
+  flux.weave.works/automated: "true"
+  flux.weave.works/tag.app: glob:*
+
+# Image configuration for easy updates
+images:
+  - name: nginx
+    newTag: 1.21-alpine
+
+# Resource name prefix
+namePrefix: ""
+
+# Resource name suffix  
+nameSuffix: ""
