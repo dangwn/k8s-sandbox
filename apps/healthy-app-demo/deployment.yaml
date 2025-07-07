@@ -30,24 +30,6 @@ spec:
             cpu: 100m
             memory: 128Mi
         # Health checks configured to be ready in ~10 seconds
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 15
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          timeoutSeconds: 3
-          successThreshold: 1
-          failureThreshold: 3
-        # Startup probe to handle initial container startup
         startupProbe:
           httpGet:
             path: /
@@ -57,6 +39,23 @@ spec:
           timeoutSeconds: 3
           failureThreshold: 5
           successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service

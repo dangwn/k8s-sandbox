@@ -4,7 +4,7 @@ metadata:
   name: healthy-app-demo
   namespace: flux-system
 spec:
-  interval: 1m
+  interval: 30s
   path: ./apps/healthy-app-demo
   prune: true
   sourceRef:
