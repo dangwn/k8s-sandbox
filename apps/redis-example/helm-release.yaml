@@ -18,7 +18,7 @@ spec:
     auth:
       enabled: false
     replica:
-      replicaCount: 2
+      replicaCount: 1
     master:
       persistence:
         enabled: false
