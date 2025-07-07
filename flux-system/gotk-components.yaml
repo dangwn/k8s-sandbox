@@ -1,0 +1,13 @@
+# To install FluxCD components, use the official installation command:
+# kubectl apply -f https://github.com/fluxcd/flux2/releases/latest/download/install.yaml
+#
+# Or use the flux CLI:
+# flux install
+#
+# This file serves as a reference. The actual components should be installed
+# using one of the methods above to ensure you get the latest stable version.
+
+---
+# This is a placeholder file. 
+# Run: kubectl apply -f https://github.com/fluxcd/flux2/releases/latest/download/install.yaml
+# Or: flux install
