@@ -1,4 +1,9 @@
 ---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: istio-system
+---
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
@@ -25,7 +30,7 @@ spec:
         namespace: flux-system
   interval: 5m
   install:
-    createNamespace: true
+    createNamespace: false
   upgrade:
     crds: CreateReplace
 ---
