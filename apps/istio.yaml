@@ -62,6 +62,8 @@ spec:
       mode: AMBIENT
     pilot:
       autoscaleEnabled: true
+      env:
+        PILOT_ENABLE_AMBIENT: true
     components:
       ztunnel:
         enabled: true
