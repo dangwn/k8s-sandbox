@@ -299,6 +299,85 @@ spec:
 - Review deployed manifests before pushing to main branch
 - Use branch protection rules and pull request reviews
 
+## Connecting to Deployed Services
+
+The following services are automatically deployed in the `points-are-bad` namespace:
+
+### Redis
+- **Service Name**: `redis-master`
+- **Port**: `6379`
+- **Connection String**: `redis-master.points-are-bad.svc.cluster.local:6379`
+- **Authentication**: Enabled (check secret `redis` for password)
+
+**Connect from within cluster:**
+```bash
+kubectl run redis-client --rm -it --restart=Never --image redis:alpine -- redis-cli -h redis-master.points-are-bad.svc.cluster.local -p 6379
+```
+
+**Port forward for local access:**
+```bash
+kubectl port-forward -n points-are-bad svc/redis-master 6379:6379
+```
+
+### PostgreSQL
+- **Primary Service Name**: `postgresql-primary`
+- **Primary Port**: `5432`
+- **Read Replica Service Name**: `postgresql-read`
+- **Read Replica Port**: `5432`
+- **Database**: `postgres`
+- **Username**: `postgres`
+- **Connection String**: `postgresql://postgres:password@postgresql-primary.points-are-bad.svc.cluster.local:5432/postgres`
+
+**Connect from within cluster:**
+```bash
+kubectl run postgresql-client --rm -it --restart=Never --image postgres:15 -n points-are-bad -- psql -h postgresql-primary.points-are-bad.svc.cluster.local -U postgres -d postgres
+```
+
+**Port forward for local access:**
+```bash
+kubectl port-forward -n points-are-bad svc/postgresql-primary 5432:5432
+```
+
+### RabbitMQ
+- **Service Name**: `rabbitmq`
+- **AMQP Port**: `5672`
+- **Management UI Port**: `15672`
+- **Connection String**: `amqp://admin:rabbitmq@rabbitmq.points-are-bad.svc.cluster.local:5672`
+- **Management UI**: `http://rabbitmq.points-are-bad.svc.cluster.local:15672`
+- **Username**: `admin`
+- **Password**: `rabbitmq`
+
+**Port forward for local access:**
+```bash
+# AMQP
+kubectl port-forward -n points-are-bad svc/rabbitmq 5672:5672
+
+# Management UI
+kubectl port-forward -n points-are-bad svc/rabbitmq 15672:15672
+```
+
+**Access Management UI locally:**
+After port forwarding, visit: http://localhost:15672 (admin/rabbitmq)
+
+### Istio Services
+Istio components run in the `istio-system` namespace and provide service mesh capabilities in ambient mode.
+
+**Check Istio status:**
+```bash
+kubectl get pods -n istio-system
+kubectl get services -n istio-system
+```
+
+### Service Discovery
+All services can be discovered using Kubernetes DNS:
+- Short form: `<service-name>` (within same namespace)
+- FQDN: `<service-name>.<namespace>.svc.cluster.local`
+
+**List all services in the points-are-bad namespace:**
+```bash
+kubectl get services -n points-are-bad
+```
+
 ## Resources
 
 - [FluxCD Documentation](https://fluxcd.io/flux/)

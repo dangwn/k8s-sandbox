@@ -1,0 +1,68 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: rabbitmq
+  namespace: points-are-bad
+spec:
+  releaseName: rabbitmq
+  chart:
+    spec:
+      chart: rabbitmq
+      version: "15.0.2"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+        namespace: flux-system
+  interval: 5m
+  values:
+    auth:
+      username: admin
+      password: rabbitmq
+      erlangCookie: "secreterlangcookie"
+    replicaCount: 1
+    clustering:
+      enabled: false
+    persistence:
+      enabled: true
+      size: 8Gi
+      storageClass: ""
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "100m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+    service:
+      type: ClusterIP
+      ports:
+        amqp: 5672
+        amqpTls: 5671
+        dist: 25672
+        manager: 15672
+        epmd: 4369
+        metrics: 9419
+    extraConfiguration: |-
+      default_user = admin
+      default_pass = rabbitmq
+      ## Clustering
+      cluster_formation.peer_discovery_backend = rabbit_peer_discovery_k8s
+      cluster_formation.k8s.host = kubernetes.default.svc.cluster.local
+      cluster_formation.k8s.address_type = hostname
+      cluster_formation.node_cleanup.interval = 10
+      cluster_formation.node_cleanup.only_log_warning = true
+      cluster_partition_handling = autoheal
+      ## queue master locator
+      queue_master_locator = min-masters
+      ## enable feature flags
+      feature_flags.enable_all = true
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: false
+    volumePermissions:
+      enabled: false
+    memoryHighWatermark:
+      enabled: true
+      type: "relative"
+      value: 0.4

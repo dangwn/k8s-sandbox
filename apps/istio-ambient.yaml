@@ -6,15 +6,6 @@ metadata:
   labels:
     istio.io/dataplane-mode: ambient
 ---
-apiVersion: source.toolkit.fluxcd.io/v1beta2
-kind: HelmRepository
-metadata:
-  name: istio
-  namespace: flux-system
-spec:
-  url: https://istio-release.storage.googleapis.com/charts
-  interval: 1h0m
----
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
@@ -25,7 +16,7 @@ spec:
   chart:
     spec:
       chart: base
-      version: "1.22.0"
+      version: "1.24.0"
       sourceRef:
         kind: HelmRepository
         name: istio
@@ -46,7 +37,7 @@ spec:
   chart:
     spec:
       chart: istiod
-      version: "1.22.0"
+      version: "1.24.0"
       sourceRef:
         kind: HelmRepository
         name: istio
@@ -59,13 +50,45 @@ spec:
     global:
       istioNamespace: istio-system
     meshConfig:
+      defaultConfig:
+        proxyStatsMatcher:
+          inclusionRegexps:
+          - ".*circuit_breakers.*"
+          - ".*upstream_rq_retry.*"
+          - ".*upstream_rq_pending.*"
+          - ".*_cx_.*"
+          - ".*osconfig.*"
+          - ".*wasm.*"
       mode: AMBIENT
     pilot:
       autoscaleEnabled: true
       env:
         PILOT_ENABLE_AMBIENT: true
-    components:
-      ztunnel:
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: istio-cni
+  namespace: istio-system
+spec:
+  releaseName: istio-cni
+  chart:
+    spec:
+      chart: cni
+      version: "1.24.0"
+      sourceRef:
+        kind: HelmRepository
+        name: istio
+        namespace: flux-system
+  interval: 5m
+  dependsOn:
+    - name: istiod
+      namespace: istio-system
+  values:
+    global:
+      istioNamespace: istio-system
+    cni:
+      ambient:
         enabled: true
 ---
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
@@ -78,44 +101,15 @@ spec:
   chart:
     spec:
       chart: ztunnel
-      version: "1.22.0"
+      version: "1.24.0"
       sourceRef:
         kind: HelmRepository
         name: istio
         namespace: flux-system
   interval: 5m
   dependsOn:
-    - name: istiod
+    - name: istio-cni
       namespace: istio-system
   values:
     global:
       istioNamespace: istio-system
----
-apiVersion: helm.toolkit.fluxcd.io/v2beta1
-kind: HelmRelease
-metadata:
-  name: istio-ingressgateway
-  namespace: istio-system
-spec:
-  releaseName: istio-ingressgateway
-  chart:
-    spec:
-      chart: gateway
-      version: "1.22.0"
-      sourceRef:
-        kind: HelmRepository
-        name: istio
-        namespace: flux-system
-  interval: 5m
-  dependsOn:
-    - name: istiod
-      namespace: istio-system
-    - name: ztunnel
-      namespace: istio-system
-  values:
-    service:
-      type: LoadBalancer
-    global:
-      istioNamespace: istio-system
-    ztunnel:
-      enabled: true

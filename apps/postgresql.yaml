@@ -1,0 +1,68 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: postgresql
+  namespace: points-are-bad
+spec:
+  releaseName: postgresql
+  chart:
+    spec:
+      chart: postgresql
+      version: "16.2.1"
+      sourceRef:
+        kind: HelmRepository
+        name: bitnami
+        namespace: flux-system
+  interval: 5m
+  values:
+    auth:
+      postgresPassword: "postgres"
+      database: "postgres"
+    architecture: replication
+    primary:
+      persistence:
+        enabled: true
+        size: 20Gi
+        storageClass: ""
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "250m"
+        limits:
+          memory: "1Gi"
+          cpu: "1000m"
+    readReplicas:
+      replicaCount: 2
+      persistence:
+        enabled: true
+        size: 20Gi
+        storageClass: ""
+      resources:
+        requests:
+          memory: "256Mi"
+          cpu: "250m"
+        limits:
+          memory: "1Gi"
+          cpu: "1000m"
+    metrics:
+      enabled: true
+      serviceMonitor:
+        enabled: false
+    replication:
+      enabled: true
+      readReplicas: 2
+      synchronousCommit: "off"
+      numSynchronousReplicas: 0
+      applicationName: "postgres"
+    postgresql:
+      maxConnections: 200
+      sharedBuffers: "256MB"
+      effectiveCacheSize: "1GB"
+      maintenanceWorkMem: "64MB"
+      walBuffers: "8MB"
+      defaultStatisticsTarget: 100
+      randomPageCost: 1.1
+      effectiveIoConcurrency: 200
+      workMem: "4MB"
+      minWalSize: "1GB"
+      maxWalSize: "2GB"
